@@ -48,9 +48,9 @@
             VerticalAlignment="Stretch">
             <ListView.View>
                 <GridView x:Name="PeopleGridView" AllowsColumnReorder="True">
-                    <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" />
-                    <GridViewColumn DisplayMemberBinding="{Binding FirstName}" Header="First Name" />
-                    <GridViewColumn DisplayMemberBinding="{Binding LastName}" Header="Last Name" />
+                    <GridViewColumn DisplayMemberBinding="{Binding Id}" Header="Id" Width="50"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding FirstName}" Header="First Name" Width="100" />
+                    <GridViewColumn DisplayMemberBinding="{Binding LastName}" Header="Last Name" Width="100"/>
                 </GridView>
             </ListView.View>
         </ListView>

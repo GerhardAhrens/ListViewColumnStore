@@ -14,6 +14,7 @@
 //-----------------------------------------------------------------------
 
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -106,16 +107,20 @@ namespace ListViewColumnStore
                 {
                     deserializationSucceeded = false;
                 }
+
                 if (deserializationSucceeded && columnOrder != null && columnOrder.Count > 0)
                 {
                     int newIndex = 0;
                     foreach (var colName in columnOrder)
                     {
+                        string colValue = colName.Split('~')[0];
+                        double colWidth = Convert.ToDouble(colName.Split('~')[1], CultureInfo.CurrentCulture);
                         int oldIndex = 0;
                         for (int i = 0; i < this.PeopleGridView.Columns.Count; i++)
                         {
-                            if (this.PeopleGridView.Columns[i].Header.ToString().Equals(colName, StringComparison.Ordinal))
+                            if (this.PeopleGridView.Columns[i].Header.ToString().Equals(colValue, StringComparison.Ordinal))
                             {
+                                this.PeopleGridView.Columns[i].Width = colWidth;
                                 oldIndex = i;
                                 break;
                             }
@@ -135,9 +140,10 @@ namespace ListViewColumnStore
             }
 
             List<String> columnOrder = new List<string>();
-            foreach (var col in this.PeopleGridView.Columns)
+            foreach (GridViewColumn col in this.PeopleGridView.Columns)
             {
-                columnOrder.Add(col.Header.ToString());
+                string column = $"{col.Header}~{col.Width}";
+                columnOrder.Add(column);
             }
 
             Serializer.ToJson(columnOrder, SettingsFile);
