@@ -60,14 +60,14 @@ namespace ListViewColumnStore
         {
             WeakEventManager<Button, RoutedEventArgs>.AddHandler(this.BtnCloseApplication, "Click", this.OnCloseApplication);
 
-            this.LoadColumnState();
+            this.LoadGridLaylout(this.PeopleListView.Name);
 
             People p = new People();
             int id = 1;
-            p.Add(new Person() { Id = id++, FirstName = "Snoopy", LastName = string.Empty });
-            p.Add(new Person() { Id = id++, FirstName = "Woodstock", LastName = string.Empty });
-            p.Add(new Person() { Id = id++, FirstName = "Donald", LastName = "Duck" });
-            p.Add(new Person() { Id = id++, FirstName = "Micky", LastName = "Maus" });
+            p.Add(new Person() { Id = id++, FirstName = "Snoopy", LastName = string.Empty, Aktiv = true });
+            p.Add(new Person() { Id = id++, FirstName = "Woodstock", LastName = string.Empty, Aktiv = true });
+            p.Add(new Person() { Id = id++, FirstName = "Donald", LastName = "Duck", Aktiv = true });
+            p.Add(new Person() { Id = id++, FirstName = "Micky", LastName = "Maus" , Aktiv = true });
             this.PeopleListView.ItemsSource = p;
 
         }
@@ -84,7 +84,7 @@ namespace ListViewColumnStore
             MessageBoxResult msgYN = MessageBox.Show("Wollen Sie die Anwendung beenden?", "Beenden", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (msgYN == MessageBoxResult.Yes)
             {
-                this.SaveColumnState();
+                this.SaveGridLayout(this.PeopleListView.Name);
                 App.ApplicationExit();
             }
             else
@@ -93,15 +93,17 @@ namespace ListViewColumnStore
             }
         }
 
-        private void LoadColumnState()
+        private void LoadGridLaylout(string gridLayoutName)
         {
-            if (File.Exists(SettingsFile))
+            string filename = Serializer.SettingsDirectory(gridLayoutName);
+
+            if (File.Exists(filename))
             {
                 bool deserializationSucceeded = true;
                 List<String> columnOrder = null;
                 try
                 {
-                    columnOrder = Serializer.FromJson<List<string>>(SettingsFile);
+                    columnOrder = Serializer.FromJson<List<string>>(filename);
                 }
                 catch (Exception)
                 {
@@ -113,14 +115,29 @@ namespace ListViewColumnStore
                     int newIndex = 0;
                     foreach (var colName in columnOrder)
                     {
-                        string colValue = colName.Split('~')[0];
-                        double colWidth = Convert.ToDouble(colName.Split('~')[1], CultureInfo.CurrentCulture);
+                        string colHeader = string.Empty;
+                        double colWidth = 0;
+
+                        if (colName.Split('~').Length == 1)
+                        {
+                            colHeader = colName.Split('~')[0];
+                        }
+                        else if (colName.Split('~').Length == 2)
+                        {
+                            colHeader = colName.Split('~')[0];
+                            colWidth = Convert.ToDouble(colName.Split('~')[1], CultureInfo.CurrentCulture);
+                        }
+
                         int oldIndex = 0;
                         for (int i = 0; i < this.PeopleGridView.Columns.Count; i++)
                         {
-                            if (this.PeopleGridView.Columns[i].Header.ToString().Equals(colValue, StringComparison.Ordinal))
+                            if (this.PeopleGridView.Columns[i].Header.ToString().Equals(colHeader, StringComparison.Ordinal))
                             {
-                                this.PeopleGridView.Columns[i].Width = colWidth;
+                                if (colWidth > 0)
+                                {
+                                    this.PeopleGridView.Columns[i].Width = colWidth;
+                                }
+
                                 oldIndex = i;
                                 break;
                             }
@@ -132,11 +149,13 @@ namespace ListViewColumnStore
             }
         }
 
-        private void SaveColumnState()
+        private void SaveGridLayout(string gridLayoutName)
         {
-            if (Directory.Exists(SettingsDirectory) == false)
+            string filename = Serializer.SettingsDirectory(gridLayoutName);
+
+            if (Directory.Exists(Path.GetDirectoryName(filename)) == false)
             {
-                Directory.CreateDirectory(SettingsDirectory);
+                Directory.CreateDirectory(Path.GetDirectoryName(filename));
             }
 
             List<String> columnOrder = new List<string>();
@@ -146,20 +165,7 @@ namespace ListViewColumnStore
                 columnOrder.Add(column);
             }
 
-            Serializer.ToJson(columnOrder, SettingsFile);
-        }
-
-        private static string SettingsFile
-        {
-            get { return _XmlDirectory ?? Path.Combine(SettingsDirectory, "Columnsetings.json"); }
-            set { _XmlDirectory = value; }
-        }
-
-        private static string _XmlDirectory;
-
-        private static string SettingsDirectory
-        {
-            get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ListViewColumnStore"); }
+            Serializer.ToJson(columnOrder, filename);
         }
 
         #region INotifyPropertyChanged implementierung
@@ -181,6 +187,7 @@ namespace ListViewColumnStore
             public int Id { get; set; }
             public string FirstName { get; set; }
             public string LastName { get; set; }
+            public bool Aktiv { get; set; }
         }
 
         public class People : List<Person>

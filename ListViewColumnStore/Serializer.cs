@@ -1,10 +1,17 @@
 ﻿namespace ListViewColumnStore
 {
     using System.IO;
+    using System.Reflection;
     using System.Text.Json;
 
     public static class Serializer
     {
+        public static string SettingsDirectory(string gridLayoutName)
+        {
+            string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), assemblyName, $"{gridLayoutName}.json");
+        }
+
         public static void ToJson<T>(T obj, string fileOrContent)
         {
             string resultJson = JsonSerializer.Serialize<T>(obj);
